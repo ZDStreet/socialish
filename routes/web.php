@@ -2,23 +2,28 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
-use App\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Rename dashboard to "feed" in UI, but keep route name for compatibility
+    // Rename dashboard to "feed" in UI, but kept route name for compatibility
     Route::view('feed', 'dashboard')
         ->name('dashboard');
 
-    // Profile routes
-    Route::get('/profile', function () {
-        return view('profile');
-    })->middleware(['auth'])->name('profile');
+    // Profile routes using Volt/Livewire
+    Route::middleware('auth')->group(function () {
+        // Profile edit route - use View directly rather than Volt::route
+        Route::view('/profile/edit', 'profile.edit')
+            ->name('profile.edit');
+            
+        // Profile view with optional username parameter
+        Route::get('/profile/{username?}', function($username = null) {
+            return view('profile.view', ['username' => $username]);
+        })->name('profile');
+    });
 
-        
     Route::view('messages', 'messages')
         ->name('messages');
 
@@ -28,6 +33,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
-
 
 require __DIR__.'/auth.php';
