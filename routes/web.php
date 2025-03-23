@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+
+    Route::view('/users/search', 'users.search')->name('users.search');
 });
 
 require __DIR__.'/auth.php';

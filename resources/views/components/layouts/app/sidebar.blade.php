@@ -4,6 +4,10 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white dark:bg-zinc-800">
+
+    <!-- Push content down to accommodate the fixed search bar -->
+        <div class="pt-14"></div>
+        
         <flux:sidebar sticky stashable class="border-r border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
@@ -15,6 +19,7 @@
                 <flux:navlist.group :heading="('Platform')" class="grid">
                     <flux:navlist.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Feed') }}</flux:navlist.item>
                     <flux:navlist.item icon="user" :href="route('profile')" :current="request()->routeIs('profile')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
+                    <flux:navlist.item icon="magnifying-glass" :href="route('users.search')" :current="request()->routeIs('users.search')" wire:navigate>{{ __('Users') }}</flux:navlist.item>
                     <flux:navlist.item icon="message-square" :href="route('messages')" :current="request()->routeIs('messages')" wire:navigate>{{ __('Messages') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
@@ -120,5 +125,109 @@
         {{ $slot }}
 
         @fluxScripts
+
+        <!-- Global Search Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const searchInput = document.getElementById('global-search');
+                const searchResults = document.getElementById('search-results');
+                const searchLoading = document.getElementById('search-loading');
+                const searchEmpty = document.getElementById('search-empty');
+                const searchContent = document.getElementById('search-content');
+                let searchTimeout;
+
+                searchInput.addEventListener('focus', function() {
+                    if (searchInput.value.trim().length > 0) {
+                        searchResults.classList.remove('hidden');
+                    }
+                });
+
+                searchInput.addEventListener('blur', function(e) {
+                    // Delay hiding to allow clicks on results
+                    setTimeout(() => {
+                        searchResults.classList.add('hidden');
+                    }, 200);
+                });
+
+                searchInput.addEventListener('input', function() {
+                    const query = searchInput.value.trim();
+                    
+                    // Clear previous timeout
+                    clearTimeout(searchTimeout);
+                    
+                    if (query.length < 2) {
+                        searchResults.classList.add('hidden');
+                        return;
+                    }
+
+                    // Show the results container
+                    searchResults.classList.remove('hidden');
+                    
+                    // Show loading state
+                    searchLoading.classList.remove('hidden');
+                    searchEmpty.classList.add('hidden');
+                    searchContent.innerHTML = '';
+                    
+                    // Debounce search requests
+                    searchTimeout = setTimeout(() => {
+                        // Fetch search results
+                        fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                searchLoading.classList.add('hidden');
+                                
+                                if (data.length === 0) {
+                                    searchEmpty.classList.remove('hidden');
+                                    return;
+                                }
+                                
+                                // Clear and populate results
+                                searchContent.innerHTML = '';
+                                
+                                data.forEach(user => {
+                                    const userElement = document.createElement('a');
+                                    userElement.href = `/users/${user.id}`;
+                                    userElement.className = 'flex items-center gap-3 px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-700';
+                                    
+                                    const avatar = document.createElement('div');
+                                    avatar.className = 'flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200';
+                                    avatar.textContent = user.name.charAt(0).toUpperCase();
+                                    
+                                    const details = document.createElement('div');
+                                    details.className = 'flex flex-col';
+                                    
+                                    const name = document.createElement('div');
+                                    name.className = 'text-sm font-medium text-zinc-900 dark:text-zinc-100';
+                                    name.textContent = user.name;
+                                    
+                                    const username = document.createElement('div');
+                                    username.className = 'text-xs text-zinc-500 dark:text-zinc-400';
+                                    username.textContent = user.email || '';
+                                    
+                                    details.appendChild(name);
+                                    details.appendChild(username);
+                                    
+                                    userElement.appendChild(avatar);
+                                    userElement.appendChild(details);
+                                    
+                                    searchContent.appendChild(userElement);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Search error:', error);
+                                searchLoading.classList.add('hidden');
+                                searchEmpty.classList.remove('hidden');
+                            });
+                    }, 300);
+                });
+
+                // Close search results when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                        searchResults.classList.add('hidden');
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
