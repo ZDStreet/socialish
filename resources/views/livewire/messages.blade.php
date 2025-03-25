@@ -27,15 +27,9 @@ new #[Layout('components.layouts.app')] class extends Component {
                     @forelse ($conversations as $conversation)
                         <div class="flex items-center p-2 border-b border-neutral-200 dark:border-neutral-700">
                             <div class="relative">
-                                @if ($conversation->recipient->avatar)
-                                    <img class="h-10 w-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-md" 
-                                         src="{{ Storage::url($conversation->recipient->avatar) }}" 
-                                         alt="{{ $conversation->recipient->name }}">
-                                @else
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-2 border-white dark:border-gray-700 shadow-md">
-                                        <span class="text-sm font-bold text-white">{{ $conversation->recipient->initials() }}</span>
-                                    </div>
-                                @endif
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-2 border-white dark:border-gray-700 shadow-md">
+                                    <span class="text-sm font-bold text-white">{{ $conversation->recipient->initials() }}</span>
+                                </div>
                                 <span class="absolute top-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-neutral-800"></span>
                             </div>
                             <a href="#" class="ml-4 text-blue-500">
