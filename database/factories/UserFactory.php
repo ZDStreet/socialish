@@ -31,7 +31,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'bio' => fake()->optional(0.8)->paragraph(),
-            'avatar' => null, // We'll add avatars manually in the seeder for some users
+            'avatar' => $this->randomAvatar(30),
         ];
     }
 
@@ -43,5 +43,21 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+        /**
+     * Generate a random avatar URL with a given probability
+     *
+     * @param int $probability Percentage chance of returning an avatar
+     * @return string|null
+     */
+    private function randomAvatar(int $probability): ?string
+    {
+        if (rand(1, 100) <= $probability) {
+            // Generate a random avatar from a service like UI Avatars or Gravatar
+            return 'https://i.pravatar.cc/150?u=' . uniqid();
+        }
+        
+        return null;
     }
 }
