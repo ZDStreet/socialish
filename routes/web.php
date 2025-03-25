@@ -24,8 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('profile');
     });
 
-    Route::view('messages', 'messages')
-        ->name('messages');
+    Volt::route('messages', 'messages')->name('messages');
 
     Route::redirect('settings', 'settings/profile');
 

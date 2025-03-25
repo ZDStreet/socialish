@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use App\Models\Conversation;
+
 
 class User extends Authenticatable
 {
@@ -84,5 +86,13 @@ class User extends Authenticatable
             ->explode(' ')
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
+    }
+
+    /**
+     * Get the user's conversations
+     */
+    public function conversations()
+    {
+        return $this->hasMany(Conversation::class, 'user_id')->orWhere('recipient_id', $this->id);
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Conversation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Volt\Component;
@@ -9,7 +10,7 @@ new class extends Component {
     public ?User $user = null;
     public bool $isOwnProfile = false;
     public $posts = [];
-    
+
     public function mount($username = null): void
     {
         if ($username) {
@@ -17,9 +18,33 @@ new class extends Component {
         } else {
             $this->user = Auth::user();
         }
-        
+
         $this->isOwnProfile = Auth::id() === $this->user->id;
-        
+    }
+
+    public function startConversation(): void
+    {
+        $recipientId = $this->user->id;
+
+        // Check if a conversation already exists
+        $conversation = Conversation::where(function ($query) use ($recipientId) {
+            $query->where('user_id', Auth::id())
+                  ->where('recipient_id', $recipientId);
+        })->orWhere(function ($query) use ($recipientId) {
+            $query->where('user_id', $recipientId)
+                  ->where('recipient_id', Auth::id());
+        })->first();
+
+        if (!$conversation) {
+            // Create a new conversation if it doesn't exist
+            Conversation::create([
+                'user_id' => Auth::id(),
+                'recipient_id' => $recipientId,
+            ]);
+        }
+
+        session()->flash('success', __('Conversation started!'));
+        $this->redirect(route('messages'));
     }
 }; 
 ?>
@@ -75,6 +100,18 @@ new class extends Component {
                                         </svg>
                                         {{ __('Edit Profile') }}
                                     </a>
+                                @else
+                                    <button wire:click="startConversation" 
+                                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 
+                                                   border border-gray-300 dark:border-gray-600 rounded-md font-medium text-sm 
+                                                   text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 
+                                                   focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 
+                                                   dark:focus:ring-offset-gray-800 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M17 8a3 3 0 11-6 0 3 3 0 016 0zM4 8a3 3 0 116 0 3 3 0 01-6 0zM12 14a6 6 0 00-8.485 0A1 1 0 004 16h12a1 1 0 00.485-2z" />
+                                        </svg>
+                                        {{ __('Start Conversation') }}
+                                    </button>
                                 @endif
                             </div>
                             

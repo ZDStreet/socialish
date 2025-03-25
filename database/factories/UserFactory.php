@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
@@ -31,7 +32,7 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'bio' => fake()->optional(0.8)->paragraph(),
-            'avatar' => $this->randomAvatar(30),
+            'avatar' => $this->storeRandomAvatar(30),
         ];
     }
 
@@ -45,19 +46,37 @@ class UserFactory extends Factory
         ]);
     }
 
-        /**
-     * Generate a random avatar URL with a given probability
+    /**
+     * Store a random avatar in storage with a given probability.
      *
-     * @param int $probability Percentage chance of returning an avatar
+     * @param int $probability Percentage chance of saving an avatar
      * @return string|null
      */
-    private function randomAvatar(int $probability): ?string
+    private function storeRandomAvatar(int $probability): ?string
     {
         if (rand(1, 100) <= $probability) {
-            // Generate a random avatar from a service like UI Avatars or Gravatar
-            return 'https://i.pravatar.cc/150?u=' . uniqid();
+            try {
+                $avatarContent = file_get_contents('https://i.pravatar.cc/150?u=' . uniqid());
+                if ($avatarContent === false) {
+                    \Log::error('Failed to fetch avatar content.');
+                    return null;
+                }
+
+                $avatarPath = 'avatars/' . uniqid() . '.jpg';
+                Storage::disk('local')->put($avatarPath, $avatarContent);
+
+                if (!Storage::disk('local')->exists($avatarPath)) {
+                    \Log::error('Failed to save avatar to storage.');
+                    return null;
+                }
+
+                return $avatarPath;
+            } catch (\Exception $e) {
+                \Log::error('Failed to save avatar: ' . $e->getMessage());
+                return null;
+            }
         }
-        
+
         return null;
     }
 }
